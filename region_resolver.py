@@ -20,7 +20,7 @@ import json
 
 # ── 시도 정규화(norm_sido) 재사용 ─────────────────────────────────────────
 # 동봉 사본 regions.py의 시도 정규화를 재사용. 시도 개편 시 원본 갱신 후 재복사.
-from regions import norm_sido, DEFAULT_SIDO  # noqa: F401
+from regions import norm_sido
 
 # ── 시군구 마스터(내부 시도키 기준) ────────────────────────────────────────
 _SNAPSHOT = os.path.join(os.path.dirname(__file__), "data", "region_master_snapshot.json")
@@ -141,7 +141,7 @@ def resolve_region(sido, sigungu):
        반환 dict:
          {'status': 'ok', 'sido': 내부키, 'sigungus': [..]|None(전역), 'note': str|None}
          {'status': 'ask',  'reason': 'no_region'|'ambiguous_sigungu', 'candidates': [...]}
-       ★DEFAULT_SIDO 조용한 폴백 금지 — 지역 신호 없으면 'ask'."""
+       ★기본 지역 조용한 폴백 금지 — 지역 신호 없으면 'ask'."""
     sido = (sido or "").strip()
     sigungu = (sigungu or "").strip()
 
