@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""동토리 MCP 어댑터 — 응답 마크다운 조립.
+"""동토리 MCP 어댑터: 응답 마크다운 조립.
 
 ★단정 금지 9개 준수:
   "주말" 단어 생성 금지 / "지금 열려 있어요" 단정 금지 / 편의시설 "없음" 단정 금지 /
@@ -52,7 +52,7 @@ def _ref_month(item):
 
 
 def fmt_fee(item, free_only=False):
-    """is_free 3-state. True만 '무료'(가족 기준). None은 미확인 — 유료 단정 금지."""
+    """is_free 3-state. True만 '무료'(가족 기준). None은 미확인: 유료 단정 금지."""
     if item.get("is_free") is True:
         return "무료"
     if item.get("is_free") is False:
@@ -123,7 +123,7 @@ def _clamp(s, n):
 
 
 def _unescape(s):
-    """소스 URL에 &amp; 등 HTML 엔티티가 섞여 옴 — 클릭 가능한 원형으로 복원."""
+    """소스 URL에 &amp; 등 HTML 엔티티가 섞여 옴: 클릭 가능한 원형으로 복원."""
     import html
     return html.unescape(str(s))
 
@@ -175,7 +175,7 @@ def detail_md(d):
     lines.append(f"**요금** {fmt_fee(d)}")
     fee = d.get("admission_fee") or {}
     if isinstance(fee, dict) and fee.get("note"):
-        # note 원문 인용 금지(%·줄바꿈 소실) — 존재 사실만 알린다.
+        # note 원문 인용 금지(%·줄바꿈 소실): 존재 사실만 알린다.
         lines.append("_감면 대상이 있을 수 있어요. 방문 전 확인해 보세요._")
 
     if d.get("hours_label"):
@@ -189,7 +189,7 @@ def detail_md(d):
     if ask:
         lines.append(f"**문의** {' · '.join(_unescape(x) for x in ask)}")
 
-    # amenities = {'raw':…, 'tags':[…]} — tags만 노출(raw 인용 금지, "없음" 단정 금지)
+    # amenities = {'raw':…, 'tags':[…]}: tags만 노출(raw 인용 금지, "없음" 단정 금지)
     am = d.get("amenities") or {}
     tags = am.get("tags") if isinstance(am, dict) else (am if isinstance(am, list) else [])
     if tags:

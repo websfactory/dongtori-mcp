@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""동토리(Dongtori) MCP 서버 — 카카오 AGENTIC PLAYER 10 출품.
+"""동토리(Dongtori) MCP 서버: 카카오 AGENTIC PLAYER 10 출품.
 
 우리 동네 아이 프로그램 큐레이션. 툴 4개:
   find_drop_in_places   상시 방문형(dropin) 장소
@@ -11,7 +11,7 @@
 설계 계약:
   - 백엔드 = programs API 단일호출 + client-side 필터. 상세만 detail API.
   - 지역 = sido(17 enum)·sigungu(free-text) 중 최소 하나. 없으면 되묻기.
-    기본 지역 조용한 폴백 금지 — 전국구 서비스.
+    기본 지역 조용한 폴백 금지: 전국구 서비스.
   - free_only = is_free None(미상) 포함 + "요금 미확인" 표시(strict 아님).
   - inclusive = true면 배려시설·배지 위로 부스팅(하드필터 금지). false면 전용시설 제외.
   - 응답 = 정제 마크다운, top10 + 잘라내기 고지. raw 덤프 금지.
@@ -71,7 +71,7 @@ mcp = FastMCP(
     json_response=True,
 )
 
-# ── 파라미터 Field 정의 (★docstring은 스키마에 안 실림 — 여기만 호스트에 전달됨) ──
+# ── 파라미터 Field 정의 (★docstring은 스키마에 안 실림: 여기만 호스트에 전달됨) ──
 
 F_SIDO = Field(description=(
     "시/도 정식 명칭으로(예: '대구'는 '대구광역시', '전남'은 '전라남도'로 변환해 입력). "
@@ -81,7 +81,7 @@ F_SIGUNGU = Field(description=(
     "sido와 sigungu 중 하나는 반드시 필요. "
     "/ District, neighborhood, or landmark; free text. At least one of sido/sigungu required."))
 F_AGES = Field(description=(
-    "아이 나이 목록 — 부모가 말한 나이 그대로 정수 배열로(예: 5살·8살이면 [5, 8]). "
+    "아이 나이 목록: 부모가 말한 나이 그대로 정수 배열로(예: 5살·8살이면 [5, 8]). "
     "하나라도 대상에 맞으면 노출됩니다. / Children's ages as an integer array."))
 F_FREE = Field(description=(
     "무료 위주로 보기. 요금 미확인 건은 '요금 미확인'으로 표시하고 함께 보여줍니다. "
@@ -92,14 +92,14 @@ F_INCLUSIVE = Field(description=(
     "/ Boost disability-friendly items; set true only when explicitly requested."))
 F_PLACE = Field(description=(
     "시설의 고유 이름(예: '북부도서관', '국립대구과학관'). "
-    "'도서관'처럼 시설 종류만으로는 불가 — 그럴 땐 지역 검색 툴을 쓰세요. "
+    "'도서관'처럼 시설 종류만으로는 불가: 그럴 땐 지역 검색 툴을 쓰세요. "
     "/ Proper venue name; a facility type alone (e.g. 'library') is not valid."))
 # ★place 툴 전용: 지역은 '선택'(동명 구분용). 공용 F_SIDO/F_SIGUNGU의
 #   "하나는 반드시 필요" 문구를 재사용하면 호스트가 지역부터 되물어 전국 스캔 강점이 죽는다
 #   (stdio 라우팅 테스트 case4 실측).
 F_PLACE_SIDO = Field(description=(
     "선택. 같은 이름의 시설이 여러 지역에 있을 때 구분용 시/도 정식 명칭. "
-    "몰라도 됩니다 — 지역 없이 호출하면 전국에서 찾아 확인해 드립니다. "
+    "몰라도 됩니다: 지역 없이 호출하면 전국에서 찾아 확인해 드립니다. "
     "/ Optional; only to disambiguate same-named venues. Omit to search nationwide."))
 F_PLACE_SIGUNGU = Field(description=(
     "선택. 동명 시설 구분용 동네 이름(예: 수성구). 몰라도 됩니다. "
@@ -112,7 +112,7 @@ F_PROGRAM_ID = Field(description=(
 # ── 공통 필터 (client-side, 호출계약 문서 그대로) ─────────────────────────
 
 def _today():
-    """KST 기준 오늘(컨테이너 TZ 무관 — UTC 컨테이너에서 새벽 시간대 하루 어긋남 방지)."""
+    """KST 기준 오늘(컨테이너 TZ 무관: UTC 컨테이너에서 새벽 시간대 하루 어긋남 방지)."""
     return datetime.now(ZoneInfo("Asia/Seoul")).date().isoformat()
 
 
@@ -129,13 +129,13 @@ def _age_ok(item, ages):
 
 
 def _free_ok(item, free_only):
-    """free_only여도 is_free None(미상)은 살린다 — False(유료 확인)만 제외."""
+    """free_only여도 is_free None(미상)은 살린다: False(유료 확인)만 제외."""
     return (not free_only) or (item.get("is_free") is not False)
 
 
 def _sigungu_ok(item, sigungus, sido_key):
     """sigungu ∈ 요청 구들 ∪ {'OO 전역'}(시 전역 프로그램 누락 방지). None=시도 전역.
-    카드 sigungu=None(위치미상, 대구 13건)은 구 질의에서 보수적 제외 — 특정 구 결과에
+    카드 sigungu=None(위치미상, 대구 13건)은 구 질의에서 보수적 제외: 특정 구 결과에
     위치 모르는 카드를 넣으면 오답 위험(의도된 결정, 시도 전체 질의에선 노출됨)."""
     if not sigungus:
         return True
@@ -206,7 +206,7 @@ DESC_DROP_IN = (
     "find_sign_up_programs를 쓰세요(이 툴은 신청 마감이 아니라 운영시간을 다룹니다). "
     "특정 시설 이름을 콕 집어 물으면(예: \"대구미술관 전시 뭐 해?\") find_place_programs를 쓰세요. "
     "(EN) Finds walk-in, no-registration places for kids (libraries, museums, science centers) "
-    "— opening hours, closures, fees. Requires sido or sigungu. "
+    ": opening hours, closures, fees. Requires sido or sigungu. "
     "For programs needing advance sign-up use find_sign_up_programs; "
     "for one specific named venue use find_place_programs."
 )
@@ -242,7 +242,7 @@ def _find_drop_in(sido, sigungu, ages, free_only, inclusive):
         out = render.empty_notice(label, "가볼 만한 곳")
         # cross-sell은 같은 지역 필터 기준으로만(시도 전체 기준 거짓 안내 방지)
         if any(i.get("participation_type") == "apply" for i in in_region):
-            out += ("\n\n대신 이 지역엔 신청해서 참여하는 프로그램이 있어요 — "
+            out += ("\n\n대신 이 지역엔 신청해서 참여하는 프로그램이 있어요. "
                     "find_sign_up_programs로 찾아볼까요?")
         return _region_header(reg, sigungu) + out
 
@@ -277,7 +277,7 @@ DESC_SIGN_UP = (
     "find_drop_in_places를 쓰세요(이 툴은 운영시간이 아니라 신청 마감을 다룹니다). "
     "특정 시설 이름을 콕 집어 물으면 find_place_programs를 쓰세요. "
     "(EN) Finds kids' programs that require advance registration (camps, classes, workshops) "
-    "— deadlines, first-come status, application links, fees. Requires sido or sigungu. "
+    ": deadlines, first-come status, application links, fees. Requires sido or sigungu. "
     "For walk-in venues use find_drop_in_places; "
     "for one specific named venue use find_place_programs."
 )
@@ -312,7 +312,7 @@ def _find_sign_up(sido, sigungu, ages, free_only, inclusive):
     if not hits:
         out = render.empty_notice(label, "신청형 프로그램")
         if any(i.get("participation_type") == "dropin" for i in in_region):
-            out += ("\n\n대신 이 지역엔 신청 없이 바로 가볼 수 있는 곳이 있어요 — "
+            out += ("\n\n대신 이 지역엔 신청 없이 바로 가볼 수 있는 곳이 있어요. "
                     "find_drop_in_places로 찾아볼까요?")
         return _region_header(reg, sigungu) + out
 
@@ -340,7 +340,7 @@ def _canon_name(s):
     return _re.sub(r"\s+", "", (s or "").strip()).lower()
 
 
-# 시설 '종류' 단어 — place_name으로 오면 지역 검색으로 유도(전국 도서관 후보 난사 방지)
+# 시설 '종류' 단어: place_name으로 오면 지역 검색으로 유도(전국 도서관 후보 난사 방지)
 GENERIC_PLACE_WORDS = {
     "도서관", "미술관", "박물관", "과학관", "문화센터", "문화회관", "문화의집",
     "키즈카페", "놀이터", "공원", "체육관", "수영장", "복지관", "가족센터", "어린이집",
@@ -373,12 +373,12 @@ DESC_PLACE = (
     "\"북부도서관 뭐 해?\", \"국립대구과학관 이번에 뭐 있어?\", \"OO문화센터 프로그램\"처럼 "
     "시설 이름을 콕 집어 물을 때 쓰세요. 그 시설의 상시 전시·행사와 신청형 강좌를 "
     "가리지 않고 함께 보여주고, 각각 방문형인지 신청형인지 표시합니다. "
-    "지역을 몰라도 됩니다 — 시설 이름만으로 전국에서 찾아 어느 지역 시설인지 확인해 드립니다. "
-    "place_name은 '북부도서관' 같은 고유 이름이어야 합니다 — '도서관', '미술관'처럼 "
+    "지역을 몰라도 됩니다: 시설 이름만으로 전국에서 찾아 어느 지역 시설인지 확인해 드립니다. "
+    "place_name은 '북부도서관' 같은 고유 이름이어야 합니다: '도서관', '미술관'처럼 "
     "시설 종류만 말하면 이 툴이 아니라 지역 검색 툴(find_drop_in_places 또는 "
     "find_sign_up_programs)을 쓰세요. \"우리 동네 갈 데\"처럼 지역에서 찾을 때도 마찬가지예요. "
     "(EN) Lists current kids' programs and events at one specific named venue, registered in "
-    "Dongtori. Region is optional — searches nationwide by venue name alone and confirms the "
+    "Dongtori. Region is optional: searches nationwide by venue name alone and confirms the "
     "location. place_name must be a proper venue name, not a facility type like 'library'. "
     "For searching by area or by type, use find_drop_in_places / find_sign_up_programs."
 )
@@ -434,11 +434,11 @@ def _find_place(place_name, sido, sigungu):
 
     head = f"**{loc}의 {vn}**을 찾았어요"
     if not (sido or sigungu):
-        head += " — 여기가 맞나요? (다른 지역 시설이면 지역을 알려주세요)"
+        head += ". 여기가 맞나요? (다른 지역 시설이면 지역을 알려주세요)"
     if not live:
         return head + f"\n\n지금 진행·모집 중인 프로그램은 등록돼 있지 않아요."
 
-    # 같은 제목의 회차별 행(예: 주간 반복 강좌) 접기 — 참여유형까지 같을 때만 병합
+    # 같은 제목의 회차별 행(예: 주간 반복 강좌) 접기: 참여유형까지 같을 때만 병합
     dedup, seen = [], {}
     for i in live:
         k = ((i.get("title") or "").strip(), i.get("participation_type"))
@@ -470,14 +470,14 @@ def _find_place(place_name, sido, sigungu):
 # ── 툴 4: 상세 ────────────────────────────────────────────────────────────
 
 DESC_DETAIL = (
-    "앞서 찾은 장소·프로그램 하나의 자세한 정보를 가져옵니다 — "
+    "앞서 찾은 장소·프로그램 하나의 자세한 정보를 가져옵니다: "
     "정확한 일정·대상 연령·모집 정원·신청 방법·요금·운영시간·문의처, 그리고 현재 휴관 여부. "
     "program_id는 앞 검색 결과 각 항목에 표시된 id 값입니다. "
     "부모가 \"그거 마감 언제야?\", \"어떻게 신청해?\", \"거기 전화번호 뭐야?\"처럼 "
     "특정 결과를 파고들 때 쓰세요. "
     "목록을 처음 찾을 때는 이 툴이 아니라 find_* 툴을 쓰고, 이 툴은 그 결과의 id가 있을 때만 쓰세요. "
     "(EN) Fetches full details for one program by its integer id from previous search results "
-    "— schedule, target age, capacity, how to apply, fees, contact, closure status. "
+    ": schedule, target age, capacity, how to apply, fees, contact, closure status. "
     "Use the find_* tools first to obtain ids."
 )
 

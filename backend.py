@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""동토리 MCP 어댑터 — 백엔드 API 클라이언트 (api_programs 단일호출 + TTL 캐시).
+"""동토리 MCP 어댑터: 백엔드 API 클라이언트 (api_programs 단일호출 + TTL 캐시).
 
 계약:
   - 리스트 툴은 전부 GET /api/programs?sido= 하나로.
@@ -74,5 +74,5 @@ def fetch_all_programs():
 
 
 def fetch_detail(program_id):
-    """GET /api/detail?id= — VISIBILITY 게이트 없음(closed_now 유일 통과 경로)."""
+    """GET /api/detail?id=: VISIBILITY 게이트 없음(closed_now 유일 통과 경로)."""
     return _get_json("/api/detail", {"id": program_id})

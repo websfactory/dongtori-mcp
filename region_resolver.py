@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""동토리 MCP 어댑터 — 지역 해소 로직 (검증 완료본, 2026-07-06 세션).
+"""동토리 MCP 어댑터: 지역 해소 로직 (검증 완료본, 2026-07-06 세션).
 
 역할: 부모의 자유 발화(sido 문자열 / sigungu 문자열)를 백엔드가 이해하는
       (내부 시도키, 시군구 리스트)로 정규화한다. **대화형 MCP 전용**(앱은 드롭다운이라 불필요).
@@ -11,7 +11,7 @@
 정규화 파이프(시도): 동봉된 `regions.py`의 norm_sido를 재사용.
 
 ★검증: norm_sigungu 21/21 + infer_sido 8/8 통과(지역 마스터 실데이터).
-★함정: substring/contains 매칭 절대 금지 — "해운대구"처럼 구 이름에 타 시도명이
+★함정: substring/contains 매칭 절대 금지: "해운대구"처럼 구 이름에 타 시도명이
        포함될 수 있어 접두/정확 매칭만 허용.
 """
 import re
@@ -141,7 +141,7 @@ def resolve_region(sido, sigungu):
        반환 dict:
          {'status': 'ok', 'sido': 내부키, 'sigungus': [..]|None(전역), 'note': str|None}
          {'status': 'ask',  'reason': 'no_region'|'ambiguous_sigungu', 'candidates': [...]}
-       ★기본 지역 조용한 폴백 금지 — 지역 신호 없으면 'ask'."""
+       ★기본 지역 조용한 폴백 금지: 지역 신호 없으면 'ask'."""
     sido = (sido or "").strip()
     sigungu = (sigungu or "").strip()
 
