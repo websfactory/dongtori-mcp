@@ -60,10 +60,14 @@ def fmt_fee(item, free_only=False):
     return "요금 미확인" + (" (무료가 아닐 수도 있어요)" if free_only else "")
 
 
-def fmt_deadline(item):
+def fmt_deadline(item, today=None):
+    """today = 서버 _today()(KST)만 받는다: 여기서 날짜 재계산 금지(이중 원천 방지)."""
     close = item.get("apply_close_at")
     close = close[:10] if close else close   # datetime 문자열이 와도 날짜만
     kind = DEADLINE_KIND_KO.get(item.get("deadline_kind"))
+    if close and today and close == today:
+        tail = " · 선착순" if item.get("deadline_kind") == "first_come" else ""
+        return f"**오늘 마감!** ({close}까지{tail})"
     if close and item.get("deadline_kind") == "first_come":
         return f"{close}까지 · 선착순 마감"
     if close:
@@ -73,7 +77,7 @@ def fmt_deadline(item):
     return "마감일이 등록돼 있지 않아요"
 
 
-def dropin_venue_card(sido_key, group):
+def dropin_venue_card(sido_key, group, free_only=False):
     """dropin 카드 = 장소 중심. group = 같은 venue의 카드 리스트(첫 항목이 대표)."""
     v = group[0]
     closed_now = bool(v.get("venue_closed_now"))
@@ -92,7 +96,7 @@ def dropin_venue_card(sido_key, group):
         lines.append(f"- {cl}" if cl.startswith("휴관") else f"- 휴관: {cl}")
     if v.get("closed_today"):
         lines.append("- 오늘은 정기 휴관일로 등록돼 있어요.")
-    lines.append(f"- 요금: {fmt_fee(v)}")
+    lines.append(f"- 요금: {fmt_fee(v, free_only)}")
     cat = VENUE_TYPE_KO.get(v.get("venue_type"))
     if cat:
         lines.append(f"- 분류: {cat}")
@@ -103,13 +107,13 @@ def dropin_venue_card(sido_key, group):
     return "\n".join(lines)
 
 
-def apply_card(sido_key, item):
+def apply_card(sido_key, item, today=None, free_only=False):
     lines = [f"### {item.get('title')} (id {item.get('id')})"]
     venue = item.get("venue_name")
     loc = display_region(sido_key, item.get("sigungu"))
     lines.append(f"- 장소: {venue} ({loc})" if venue else f"- 지역: {loc}")
-    lines.append(f"- 마감: {fmt_deadline(item)}")
-    lines.append(f"- 요금: {fmt_fee(item)}")
+    lines.append(f"- 마감: {fmt_deadline(item, today)}")
+    lines.append(f"- 요금: {fmt_fee(item, free_only)}")
     if item.get("apply_url"):
         lines.append(f"- 신청: {item['apply_url']}")
     if item.get("support_badge"):
@@ -185,9 +189,29 @@ def detail_md(d):
     if d.get("apply_url"):
         lines.append(f"**신청** {_unescape(d['apply_url'])}")
 
-    ask = [x for x in (d.get("venue_phone"), d.get("homepage_url")) if x]
+    # 문의처 = venue 대표번호 + 프로그램 담당 연락처(contact) 병기 + 홈페이지.
+    # contact는 공고 원문 유래라 placeholder('-')·중복·과다 길이 방어 필수.
+    ask, seen = [], []
+
+    def _add_ask(x, clamp_n=None):
+        if not x:
+            return
+        c = _unescape(x).strip()
+        if clamp_n:
+            c = _clamp(c, clamp_n)
+        norm = "".join(c.split())
+        if len(norm.strip("-·.,/")) < 2:          # '-' 등 placeholder 값 제거
+            return
+        if any(norm in s or s in norm for s in seen):   # 동일·포함 중복 제거
+            return
+        seen.append(norm)
+        ask.append(c)
+
+    _add_ask(d.get("venue_phone"), 80)
+    _add_ask(d.get("contact"), 80)
+    _add_ask(d.get("homepage_url"))               # URL은 clamp 금지(클릭 가능성 보존)
     if ask:
-        lines.append(f"**문의** {' · '.join(_unescape(x) for x in ask)}")
+        lines.append(f"**문의** {' · '.join(ask)}")
 
     # amenities = {'raw':…, 'tags':[…]}: tags만 노출(raw 인용 금지, "없음" 단정 금지)
     am = d.get("amenities") or {}
